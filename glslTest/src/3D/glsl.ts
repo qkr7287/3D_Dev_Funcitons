@@ -1,60 +1,5 @@
 import * as BABYLON from '@babylonjs/core'
 
-// GLSL 셰이더 코드
-const vertexShader = `
-
-attribute vec3 position;
-attribute vec2 uv;
-
-uniform mat4 worldViewProjection;
-
-varying vec2 vUV;
-
-void main() {
-    vUV = uv;
-    gl_Position = worldViewProjection * vec4(position, 1.0);
-}
-`
-
-const fragmentShader = `
-// Author @patriciogv - 2015
-
-#ifdef GL_ES
-precision mediump float;
-#endif
-
-varying vec2 vUV;
-
-uniform float u_time;
-uniform float u_gridNum;          // 셀 개수 (정사각형 그리드)
-uniform sampler2D u_gridValues;   // gridNum x gridNum 크기의 데이터 텍스처
-uniform float u_lineThickness;    // 0.0~0.2 정도 권장
-
-void main() {
-    // 0~1의 UV를 그리드 좌표계로 확장
-    vec2 pos = vUV * u_gridNum;
-    vec2 i_st = floor(pos);         // 셀 인덱스
-    vec2 f_st = fract(pos);         // 셀 내부 좌표
-
-    // 셀 인덱스를 이용해 데이터 텍스처에서 해당 셀의 스칼라 값 읽기
-    // 텍스처 좌표는 픽셀 센터로 접근 (i + 0.5)/gridNum
-    vec2 texUV = (i_st + 0.5) / u_gridNum;
-    float cell_value = texture2D(u_gridValues, texUV).r; // 0~1
-
-    // 색 변환: R=cell_value, B=1.0-cell_value (G=0)
-    float R = cell_value;
-    float B = 1.0 - cell_value;
-    vec3 color = vec3(R, 0.0, B);
-
-    // 그리드 라인 (검정)
-    float lineX = 1.0 - step(u_lineThickness, f_st.x);
-    float lineY = 1.0 - step(u_lineThickness, f_st.y);
-    float grid_line_mask = max(lineX, lineY);
-
-    color = mix(color, vec3(0.0), grid_line_mask);
-    gl_FragColor = vec4(color, 1.0);
-}
-`
 // 2D -> 1D 인덱싱 유틸
 const idx = (x: number, y: number, size: number) => y * size + x;
 
@@ -87,6 +32,8 @@ export function createGridTexture(scene: Scene, gridNum: number, values2D?: numb
             data[idx(x, y, size)] = Math.floor(v * 255);
         }
     }
+
+    console.log(data);
 
     const tex = RawTexture.CreateRTexture(
         data,
